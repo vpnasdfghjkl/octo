@@ -47,18 +47,21 @@ def get_config(config_string="full,multimodal"):
     else:
         raise ValueError("Invalid mode")
 
-    max_steps = FieldReference(50000)
+    # max_steps = FieldReference(50000)
+    max_steps = FieldReference(2100)
     window_size = FieldReference(default=1)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=256,
+        # batch_size=256,
+        batch_size=1,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
         eval_interval=5000,
-        save_interval=5000,
+        # save_interval=5000,
+        save_interval=500,
         save_dir=placeholder(str),
         seed=42,
         wandb=dict(

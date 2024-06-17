@@ -155,6 +155,22 @@ Octo was pretrained with an action chunking size of 4, meaning it predicts the n
   - Fixed an off-by-one error with the attention mask.
   - Fixed an issue where different image augmentations did not get fresh random seeds.
 
+## install tips
+1. cuda+cudnn
+```bash
+# cuda12.2 
+# 官网下载runfile版本-运行-取消勾选driver-install:
+# add to .bashrc
+export PATH=$PATH:/usr/local/cuda-12.2/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-12.2/lib64
+export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/cuda-12.2/lib64
+```
+```bash
+# cudnn8.9:
+tar -xf cudnn-linux-x86_64-8.9.7.29_cuda12-archive.tar.xz
+sudo cp lib/* /usr/local/cuda-12.2/lib64/
+sudo cp include/* /usr/local/cuda-12.2/include
+```
 ## Citation
 
 ```
