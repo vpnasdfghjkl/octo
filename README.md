@@ -171,6 +171,59 @@ tar -xf cudnn-linux-x86_64-8.9.7.29_cuda12-archive.tar.xz
 sudo cp lib/* /usr/local/cuda-12.2/lib64/
 sudo cp include/* /usr/local/cuda-12.2/include
 ```
+
+## error rec
+1. batch_size设置为1，刚开始ok，过了几天运行finetune.py会报错
+```bash
+  0%|                                                                                                                        | 0/2100 [00:00<?, ?it/s]/home/lab/miniconda3/envs/octo/lib/python3.10/site-packages/huggingface_hub/file_download.py:1132: FutureWarning: `resume_download` is deprecated and will be removed in version 1.0.0. Downloads always resume when possible. If you want to force a new download, use `force_download=True`.
+  warnings.warn(
+I0623 20:04:16.294819 139756573373632 octo_module.py:219] repeating task tokens at each timestep to perform cross-modal attention
+I0623 20:04:22.180553 139756573373632 compiler.py:323] Persistent compilation cache hit for 'jit_train_step'
+2024-06-23 20:04:22.388678: W external/xla/xla/service/gpu/runtime/support.cc:58] Intercepted XLA runtime error:
+UNKNOWN: CUDNN_STATUS_NOT_SUPPORTED
+in external/xla/xla/stream_executor/cuda/cuda_dnn.cc(7424): 'plan' CUDNN_BACKEND_EXECUTION_PLAN_DESCRIPTOR: cudnnFinalize Descriptor Failed
+2024-06-23 20:04:22.389014: E external/xla/xla/pjrt/pjrt_stream_executor_client.cc:2716] Execution of replica 0 failed: INTERNAL: Failed to execute XLA Runtime executable: run time error: custom call 'xla.gpu.conv.backward.filter' failed: CUDNN_STATUS_NOT_SUPPORTED
+in external/xla/xla/stream_executor/cuda/cuda_dnn.cc(7424): 'plan' CUDNN_BACKEND_EXECUTION_PLAN_DESCRIPTOR: cudnnFinalize Descriptor Failed; current tracing scope: cudnn-conv-bw-filter.15; current profiling annotation: XlaModule:#hlo_module=jit_train_step,program_id=74#.
+  0%|                                                                                                                        | 0/2100 [00:06<?, ?it/s]
+jax.errors.SimplifiedTraceback: For simplicity, JAX has removed its internal frames from the traceback of the following exception. Set JAX_TRACEBACK_FILTERING=off to include these.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/lab/hanxiao/octo/scripts/finetune.py", line 411, in <module>
+    app.run(main)
+  File "/home/lab/miniconda3/envs/octo/lib/python3.10/site-packages/absl/app.py", line 308, in run
+    _run_main(main, args)
+  File "/home/lab/miniconda3/envs/octo/lib/python3.10/site-packages/absl/app.py", line 254, in _run_main
+    sys.exit(main(argv))
+  File "/home/lab/hanxiao/octo/scripts/finetune.py", line 379, in main
+    train_state, update_info = train_step(train_state, batch)
+jaxlib.xla_extension.XlaRuntimeError: INTERNAL: Failed to execute XLA Runtime executable: run time error: custom call 'xla.gpu.conv.backward.filter' failed: CUDNN_STATUS_NOT_SUPPORTED
+in external/xla/xla/stream_executor/cuda/cuda_dnn.cc(7424): 'plan' CUDNN_BACKEND_EXECUTION_PLAN_DESCRIPTOR: cudnnFinalize Descriptor Failed; current tracing scope: cudnn-conv-bw-filter.15; current profiling annotation: XlaModule:#hlo_module=jit_train_step,program_id=74#.
+```
+但是当我注释fineturn.py中的以下内容时或者修改batch_size>1,可以顺利执行（我发现examples中的02...没有这几行）
+```python
+    def train_step(state: TrainState, batch):
+        rng, dropout_rng = jax.random.split(state.rng)
+        (loss, info), grads = jax.value_and_grad(loss_fn, has_aux=True)(
+            state.model.params, batch, dropout_rng, train=True
+        )
+        # grad_norm = optax.global_norm(grads)
+        # updates, _ = state.tx.update(grads, state.opt_state, state.model.params)
+        # update_norm = optax.global_norm(updates)
+        # info.update(
+        #     {
+        #         "grad_norm": grad_norm,
+        #         "update_norm": update_norm,
+        #         "param_norm": param_norm_callable(state.model.params),
+        #         "learning_rate": lr_callable(state.step),
+        #     }
+        # )
+        new_state = state.apply_gradients(grads=grads, rng=rng)
+        return new_state, info
+```
+
+
 ## Citation
 
 ```
