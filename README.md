@@ -222,7 +222,7 @@ in external/xla/xla/stream_executor/cuda/cuda_dnn.cc(7424): 'plan' CUDNN_BACKEND
         new_state = state.apply_gradients(grads=grads, rng=rng)
         return new_state, info
 ```
-
+2. 为什么执行这个finetune.py的命令在linux终端执行速度比在vscode终端的执行速度快，我发现在vscode终端的代理没有挂，但是我在vscode终端export http_proxy="127.0.0.1:7890"之后直接网络错误了
 
 ## Citation
 
