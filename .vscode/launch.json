@@ -5,8 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         
-
-        
         {
             "name": "Python 调试程序: finetune",
             "type": "debugpy",
@@ -19,6 +17,7 @@
                 "--config.save_dir=${workspaceFolder}/scripts/finetune_ckpt"
             ]
         },
+        
         {
             "name": "Python 调试程序: finetune on new obs",
             "type": "debugpy",

@@ -33,7 +33,24 @@ def get_config(config_string="full,multimodal"):
         # "num_parallel_reads": 8,  # for reading from disk / GCS
         # "num_parallel_calls": 16,  # for initial dataset construction
     }
-
+    # FINETUNING_KWARGS = {
+    #     "name": "z1",
+    #     "data_dir": "example_data_z1/",
+    #     "image_obs_keys": {"primary": "image"},
+    #     "proprio_obs_key": "state",
+    #     "language_key": "language_instruction",
+    #     "action_proprio_normalization_type": "normal",
+    #     # We want to avoid normalizing the gripper
+    #     "action_normalization_mask": [True, True, True, True, True, True, False],
+    #     # standardize_fn is dynamically loaded from a file
+    #     # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
+    #     "standardize_fn": ModuleSpec.create(
+    #         "octo.data.oxe.oxe_standardization_transforms:bridge_dataset_transform",
+    #     ),
+    #     # If the default data loading speed is too slow, try these:
+    #     # "num_parallel_reads": 8,  # for reading from disk / GCS
+    #     # "num_parallel_calls": 16,  # for initial dataset construction
+    # }
     if mode == "full":
         frozen_keys = None
     elif mode == "head_only":
