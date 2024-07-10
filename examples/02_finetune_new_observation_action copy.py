@@ -35,7 +35,7 @@ flags.DEFINE_string(
 flags.DEFINE_string("data_dir", None, "Path to finetuning dataset, in RLDS format.")
 flags.DEFINE_string("save_dir", None, "Directory for saving finetuning checkpoints.")
 # flags.DEFINE_integer("batch_size", 128, "Batch size for finetuning.")
-flags.DEFINE_integer("batch_size", 2, "Batch size for finetuning.")
+flags.DEFINE_integer("batch_size", 1, "Batch size for finetuning.")
 
 flags.DEFINE_bool(
     "freeze_transformer",
@@ -54,7 +54,7 @@ def main(_):
     tf.config.set_visible_devices([], "GPU")
 
     # setup wandb for logging
-    wandb.init(name="finetune_kuavo", project="octo")
+    wandb.init(name="finetune_aloha", project="octo")
 
     # load pre-trained model
     logging.info("Loading pre-trained model...")
@@ -67,16 +67,15 @@ def main(_):
     logging.info("Loading finetuning dataset...")
     dataset = make_single_dataset(
         dataset_kwargs=dict(
-            name="kuavo",
+            name="aloha_sim_cube_scripted_dataset",
             data_dir=FLAGS.data_dir,
-            image_obs_keys={"primary": "image"},
+            image_obs_keys={"primary": "top"},
             proprio_obs_key="state",
             language_key="language_instruction",
-            action_normalization_mask=[True, True, True, True, True, True,True, False],
         ),
         traj_transform_kwargs=dict(
-            window_size=2,
-            action_horizon=10,
+            window_size=1,
+            action_horizon=50,
         ),
         frame_transform_kwargs=dict(
             resize_size={"primary": (256, 256)},
@@ -118,8 +117,8 @@ def main(_):
     # Fully override the old action head with a new one (for smaller changes, you can use update_config)
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
-        action_horizon=10,
-        action_dim=8,
+        action_horizon=50,
+        action_dim=14,
         readout_key="readout_action",
     )
 

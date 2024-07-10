@@ -6,7 +6,7 @@
     "configurations": [
         
         {
-            "name": "Python 调试程序: finetune",
+            "name": "finetune example",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/scripts/finetune.py",
@@ -17,7 +17,19 @@
                 "--config.save_dir=${workspaceFolder}/scripts/finetune_ckpt"
             ]
         },
-        
+        {
+            "name": "finetune my self",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/finetune.py",
+            "console": "integratedTerminal",
+            "args": [
+                "--config.pretrained_path=hf://rail-berkeley/octo-small-1.5",
+                "--debug",
+                "--config.save_dir=${workspaceFolder}/scripts/finetune_ckpt",
+                // "--config_file=${workspaceFolder}/scripts/configs/finetune_config_kuavo.py",
+            ]
+        },
         {
             "name": "Python 调试程序: finetune on new obs",
             "type": "debugpy",
@@ -25,10 +37,11 @@
             "program": "${workspaceFolder}/examples/02_finetune_new_observation_action.py",
             "console": "integratedTerminal",
             "args": [
-                "--pretrained_path=${workspaceFolder}/pre_train_ckpt",
+                "--pretrained_path=hf://rail-berkeley/octo-small-1.5",
                 // "--debug",
                 "--save_dir=${workspaceFolder}/finetune_ckpt",
-                "--data_dir=${workspaceFolder}/example_sim_data/aloha_sim_dataset"
+                // "--data_dir=${workspaceFolder}/example_sim_data/aloha_sim_dataset"
+                "--data_dir=/home/smj/tensorflow_datasets"
             ]      
 
         }

@@ -46,8 +46,9 @@ flags.DEFINE_string("name", "experiment", "Experiment name.")
 flags.DEFINE_bool("debug", False, "Debug config (no wandb logging)")
 
 default_config_file = os.path.join(
-    os.path.dirname(__file__), "configs/finetune_config.py"
+    os.path.dirname(__file__), "configs/finetune_config_kuavo.py"
 )
+
 config_flags.DEFINE_config_file(
     "config",
     default_config_file,
@@ -143,6 +144,14 @@ def main(_):
     config = ConfigDict(flax.traverse_util.unflatten_dict(flat_config))
     config.update(FLAGS.config.get("update_config", ConfigDict()))
     config = config.to_dict()
+
+    from octo.model.components.action_heads import L1ActionHead
+    config["model"]["heads"]["action"] = ModuleSpec.create(
+        L1ActionHead,
+        action_horizon=10,
+        action_dim=8,
+        readout_key="readout_action",
+    )
     check_config_diff(config, pretrained_model.config)
 
     #########

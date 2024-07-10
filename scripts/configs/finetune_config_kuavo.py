@@ -15,33 +15,15 @@ def get_config(config_string="full,multimodal"):
     # first image key should be the third-person view (None if not used)
     # and second image key should be the wrist view (None if not used)
 
-    FINETUNING_KWARGS = {
-        "name": "bridge_dataset",
-        "data_dir": "./tests/debug_dataset",
-        "image_obs_keys": {"primary": "image_0", "wrist": None},
-        "proprio_obs_key": "proprio",
-        "language_key": "language_instruction",
-        "action_proprio_normalization_type": "normal",
-        # We want to avoid normalizing the gripper
-        "action_normalization_mask": [True, True, True, True, True, True, False],
-        # standardize_fn is dynamically loaded from a file
-        # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
-        "standardize_fn": ModuleSpec.create(
-            "octo.data.oxe.oxe_standardization_transforms:bridge_dataset_transform",
-        ),
-        # If the default data loading speed is too slow, try these:
-        # "num_parallel_reads": 8,  # for reading from disk / GCS
-        # "num_parallel_calls": 16,  # for initial dataset construction
-    }
     # FINETUNING_KWARGS = {
-    #     "name": "kuavo",
-    #     "data_dir": "/home/rebot801/tensorflow_datasets",
-    #     "image_obs_keys": {"primary": "image"},
-    #     "proprio_obs_key": "state",
+    #     "name": "bridge_dataset",
+    #     "data_dir": "./tests/debug_dataset",
+    #     "image_obs_keys": {"primary": "image_0", "wrist": None},
+    #     "proprio_obs_key": "proprio",
     #     "language_key": "language_instruction",
     #     "action_proprio_normalization_type": "normal",
     #     # We want to avoid normalizing the gripper
-    #     "action_normalization_mask": [True, True, True, True, True, True,True, False],
+    #     "action_normalization_mask": [True, True, True, True, True, True, False],
     #     # standardize_fn is dynamically loaded from a file
     #     # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
     #     "standardize_fn": ModuleSpec.create(
@@ -51,6 +33,24 @@ def get_config(config_string="full,multimodal"):
     #     # "num_parallel_reads": 8,  # for reading from disk / GCS
     #     # "num_parallel_calls": 16,  # for initial dataset construction
     # }
+    FINETUNING_KWARGS = {
+        "name": "kuavo",
+        "data_dir": "/home/smj/tensorflow_datasets",
+        "image_obs_keys": {"primary": "image"},
+        "proprio_obs_key": "state",
+        "language_key": "language_instruction",
+        "action_proprio_normalization_type": "normal",
+        # We want to avoid normalizing the gripper
+        "action_normalization_mask": [True, True, True, True, True, True,True, False],
+        # standardize_fn is dynamically loaded from a file
+        # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
+        # "standardize_fn": ModuleSpec.create(
+        #     "octo.data.oxe.oxe_standardization_transforms:bridge_dataset_transform",
+        # ),
+        # If the default data loading speed is too slow, try these:
+        # "num_parallel_reads": 8,  # for reading from disk / GCS
+        # "num_parallel_calls": 16,  # for initial dataset construction
+    }
     if mode == "full":
         frozen_keys = None
     elif mode == "head_only":
@@ -66,7 +66,7 @@ def get_config(config_string="full,multimodal"):
 
     # max_steps = FieldReference(50000)
     max_steps = FieldReference(2100)
-    window_size = FieldReference(default=1)
+    window_size = FieldReference(default=2)
 
     config = dict(
         pretrained_path=placeholder(str),
@@ -128,7 +128,7 @@ def get_config(config_string="full,multimodal"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        action_horizon=4,
+        action_horizon=10,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
