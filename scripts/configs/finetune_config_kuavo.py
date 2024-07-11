@@ -64,21 +64,21 @@ def get_config(config_string="full,multimodal"):
     else:
         raise ValueError("Invalid mode")
 
-    # max_steps = FieldReference(50000)
-    max_steps = FieldReference(2100)
+    max_steps = FieldReference(50000)
+    # max_steps = FieldReference(2100)
     window_size = FieldReference(default=2)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        # batch_size=256,
-        batch_size=4,
+        batch_size=256,
+        # batch_size=4,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
         eval_interval=5000,
-        # save_interval=5000,
-        save_interval=500,
+        save_interval=5000,
+        # save_interval=500,
         save_dir=placeholder(str),
         seed=42,
         wandb=dict(
@@ -166,7 +166,7 @@ def get_config(config_string="full,multimodal"):
     frame_transform_kwargs = dict(
         resize_size={
             "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "wrist": (128, 128),  # wrist camera is at 128x128
+            # "wrist": (128, 128),  # wrist camera is at 128x128
         },
         image_augment_kwargs=dict(
             primary=workspace_augment_kwargs,

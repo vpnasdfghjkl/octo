@@ -58,6 +58,7 @@ config_flags.DEFINE_config_file(
 
 
 def main(_):
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     initialize_compilation_cache()
     devices = jax.devices()
     logging.info(
