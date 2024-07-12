@@ -13,8 +13,8 @@ def main():
     os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
     # 创建两个随机矩阵，放到设备上进行计算
-    a = jax.random.normal(jax.random.PRNGKey(0), (1000, 1000))
-    b = jax.random.normal(jax.random.PRNGKey(1), (1000, 1000))
+    a = jax.random.normal(jax.random.PRNGKey(0), (2000, 2000))
+    b = jax.random.normal(jax.random.PRNGKey(1), (2000, 2000))
     a_gpu = device_put(a)
     b_gpu = device_put(b)
 
@@ -26,4 +26,6 @@ def main():
     print("Result example:", result[:5, :5])
 
 if __name__ == "__main__":
+
     main()
+

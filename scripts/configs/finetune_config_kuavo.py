@@ -34,14 +34,14 @@ def get_config(config_string="full,multimodal"):
     #     # "num_parallel_calls": 16,  # for initial dataset construction
     # }
     FINETUNING_KWARGS = {
-        "name": "kuavo",
-        "data_dir": "/home/smj/tensorflow_datasets",
-        "image_obs_keys": {"primary": "image"},
+        "name": "kuavo_two_cam",
+        "data_dir": "/media/smj/新加卷2/rlds",
+        "image_obs_keys": {"extra_cam": "image02", "wrist": "image01"},
         "proprio_obs_key": "state",
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
         # We want to avoid normalizing the gripper
-        "action_normalization_mask": [True, True, True, True, True, True,True, False],
+        "action_normalization_mask": [True, True,True, True, True, True,True, False],
         # standardize_fn is dynamically loaded from a file
         # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
         # "standardize_fn": ModuleSpec.create(
@@ -64,21 +64,22 @@ def get_config(config_string="full,multimodal"):
     else:
         raise ValueError("Invalid mode")
 
-    max_steps = FieldReference(50000)
-    # max_steps = FieldReference(2100)
-    window_size = FieldReference(default=2)
+    # max_steps = FieldReference(50000)
+    max_steps = FieldReference(5000)
+    window_size = FieldReference(default=1)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
-        batch_size=256,
-        # batch_size=4,
+        # batch_size=256,
+        batch_size=16,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
-        eval_interval=5000,
-        save_interval=5000,
-        # save_interval=500,
+        # eval_interval=5000,
+        eval_interval=1000,
+        # save_interval=5000,
+        save_interval=1000,
         save_dir=placeholder(str),
         seed=42,
         wandb=dict(
@@ -105,9 +106,11 @@ def get_config(config_string="full,multimodal"):
         val_kwargs=dict(
             val_shuffle_buffer_size=1000,
             num_val_batches=16,
+            # num_val_batches=4,
         ),
         viz_kwargs=dict(
-            eval_batch_size=128,
+            # eval_batch_size=128,
+            eval_batch_size=4,
             trajs_for_metrics=100,
             trajs_for_viz=8,
             samples_per_state=8,
@@ -165,8 +168,9 @@ def get_config(config_string="full,multimodal"):
     )
     frame_transform_kwargs = dict(
         resize_size={
-            "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            # "wrist": (128, 128),  # wrist camera is at 128x128
+            # "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
+            "extra_cam": (256, 256),  # workspace (3rd person) camera is at 256x256
+            "wrist": (128, 128),  # wrist camera is at 128x128
         },
         image_augment_kwargs=dict(
             primary=workspace_augment_kwargs,

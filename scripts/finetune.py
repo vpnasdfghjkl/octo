@@ -23,6 +23,7 @@ from octo.utils.train_callbacks import (
     ValidationCallback,
     VisualizationCallback,
 )
+
 from octo.utils.train_utils import (
     check_config_diff,
     create_optimizer,
@@ -56,9 +57,9 @@ config_flags.DEFINE_config_file(
     lock_config=False,
 )
 
-
+# python scripts/finetune.py --config.pretrained_path=hf://rail-berkeley/octo-small-1.5 --config.save_dir=scripts/finetune_ckpt 
 def main(_):
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
     initialize_compilation_cache()
     devices = jax.devices()
     logging.info(
@@ -146,13 +147,55 @@ def main(_):
     config.update(FLAGS.config.get("update_config", ConfigDict()))
     config = config.to_dict()
 
+#===============================================================================================
+    from octo.model.components.tokenizers import LowdimObsTokenizer,ImageTokenizer
+    config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
+        LowdimObsTokenizer,
+        n_bins=256,
+        bin_type="normal",
+        low=-2.0,
+        high=2.0,
+        obs_keys=["proprio"],
+    )
+    from octo.model.components.vit_encoders import SmallStem16
+    config["model"]["observation_tokenizers"] = {
+        "primary": ModuleSpec.create(
+            ImageTokenizer,
+            obs_stack_keys=["image_primary"],
+            task_stack_keys=["image_primary"],
+            encoder=ModuleSpec.create(SmallStem16),
+        ),
+        "wrist": ModuleSpec.create(
+            ImageTokenizer,
+            obs_stack_keys=["image_wrist"],
+            task_stack_keys=["image_wrist"],
+            encoder=ModuleSpec.create(SmallStem16),
+        ),
+        "extra_cam": ModuleSpec.create(
+            ImageTokenizer,
+            obs_stack_keys=["image_extra_cam"],
+            task_stack_keys=["image_extra_cam"],
+            encoder=ModuleSpec.create(SmallStem16),
+        ),
+    }
+    # config["model"]["observation_tokenizers"]["extra_cam"] = ModuleSpec.create(
+    #     ImageTokenizer,
+    #     obs_stack_keys=["image_extra_cam"],
+    #     task_stack_keys=["image_extra_cam"],
+    #     encoder=ModuleSpec.create(SmallStem16),
+    # )
+    
     from octo.model.components.action_heads import L1ActionHead
+    from octo.model.components.action_heads import DiffusionActionHead
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
+        # DiffusionActionHead,
         action_horizon=10,
         action_dim=8,
         readout_key="readout_action",
     )
+#===============================================================================================
+
     check_config_diff(config, pretrained_model.config)
 
     #########
@@ -395,21 +438,21 @@ def main(_):
                 {"training": update_info, "timer": timer.get_average_times()}, step=i
             )
 
-        if (i + 1) % FLAGS.config.eval_interval == 0:
-            logging.info("Evaluating...")
+        # if (i + 1) % FLAGS.config.eval_interval == 0:
+        #     logging.info("Evaluating...")
 
-            with timer("val"):
-                val_metrics = val_callback(train_state, i + 1)
-                wandb_log(val_metrics, step=i)
+        #     with timer("val"):
+        #         val_metrics = val_callback(train_state, i + 1)
+        #         wandb_log(val_metrics, step=i)
 
-            with timer("visualize"):
-                viz_metrics = viz_callback(train_state, i + 1)
-                wandb_log(viz_metrics, step=i)
+        #     with timer("visualize"):
+        #         viz_metrics = viz_callback(train_state, i + 1)
+        #         wandb_log(viz_metrics, step=i)
 
-            if rollout_callback is not None:
-                with timer("rollout"):
-                    rollout_metrics = rollout_callback(train_state, i + 1)
-                    wandb_log(rollout_metrics, step=i)
+        #     if rollout_callback is not None:
+        #         with timer("rollout"):
+        #             rollout_metrics = rollout_callback(train_state, i + 1)
+        #             wandb_log(rollout_metrics, step=i)
 
         if (i + 1) % FLAGS.config.save_interval == 0 and save_dir is not None:
             logging.info("Saving checkpoint...")
@@ -418,3 +461,4 @@ def main(_):
 
 if __name__ == "__main__":
     app.run(main)
+

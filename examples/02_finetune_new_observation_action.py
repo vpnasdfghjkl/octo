@@ -43,7 +43,7 @@ flags.DEFINE_bool(
     "Whether pre-trained transformer weights should be frozen.",
 )
 
-
+# python examples/02_finetune_new_observation_action.py --pretrained_path=hf://rail-berkeley/octo-small-1.5 --config.save_dir=finetune_ckpt --data_dir=/home/smj/tensorflow_datasetsdef main(_):
 def main(_):
     assert (
         FLAGS.batch_size % jax.device_count() == 0
