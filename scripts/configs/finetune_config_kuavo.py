@@ -35,8 +35,8 @@ def get_config(config_string="full,multimodal"):
     # }
     FINETUNING_KWARGS = {
         "name": "kuavo_two_cam",
-        "data_dir": "/media/smj/新加卷2/rlds",
-        "image_obs_keys": {"extra_cam": "image02", "wrist": "image01"},
+        "data_dir": "/media/smj/4A7A0C167A0BFE07/octo_rlds",
+        "image_obs_keys": {"wrist": "image01"},
         "proprio_obs_key": "state",
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
@@ -65,14 +65,14 @@ def get_config(config_string="full,multimodal"):
         raise ValueError("Invalid mode")
 
     # max_steps = FieldReference(50000)
-    max_steps = FieldReference(5000)
-    window_size = FieldReference(default=1)
+    max_steps = FieldReference(3000)
+    window_size = FieldReference(default=2)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
         # batch_size=256,
-        batch_size=16,
+        batch_size=8,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
@@ -94,7 +94,8 @@ def get_config(config_string="full,multimodal"):
                 name="cosine",
                 init_value=0.0,
                 peak_value=3e-4,
-                warmup_steps=2000,
+                # warmup_steps=2000,
+                warmup_steps=200,
                 decay_steps=max_steps,
                 end_value=0.0,
             ),
@@ -105,13 +106,14 @@ def get_config(config_string="full,multimodal"):
         ),
         val_kwargs=dict(
             val_shuffle_buffer_size=1000,
-            num_val_batches=16,
-            # num_val_batches=4,
+            # num_val_batches=16,
+            num_val_batches=4,
         ),
         viz_kwargs=dict(
             # eval_batch_size=128,
             eval_batch_size=4,
-            trajs_for_metrics=100,
+            # trajs_for_metrics=100,
+            trajs_for_metrics=8,
             trajs_for_viz=8,
             samples_per_state=8,
         ),
@@ -131,14 +133,14 @@ def get_config(config_string="full,multimodal"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        action_horizon=10,
+        action_horizon=20,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
             keep_image_prob=keep_image_prob,
         ),
         # If the default data loading speed is too slow, try these:
-        # num_parallel_calls=16,  # for less CPU-intensive ops
+        num_parallel_calls=16,  # for less CPU-intensive ops
     )
     workspace_augment_kwargs = dict(
         random_resized_crop=dict(scale=[0.8, 1.0], ratio=[0.9, 1.1]),
@@ -169,7 +171,7 @@ def get_config(config_string="full,multimodal"):
     frame_transform_kwargs = dict(
         resize_size={
             # "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "extra_cam": (256, 256),  # workspace (3rd person) camera is at 256x256
+            # "extra_cam": (256, 256),  # workspace (3rd person) camera is at 256x256
             "wrist": (128, 128),  # wrist camera is at 128x128
         },
         image_augment_kwargs=dict(

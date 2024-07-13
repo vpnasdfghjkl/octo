@@ -157,40 +157,35 @@ def main(_):
         high=2.0,
         obs_keys=["proprio"],
     )
-    from octo.model.components.vit_encoders import SmallStem16
-    config["model"]["observation_tokenizers"] = {
-        "primary": ModuleSpec.create(
-            ImageTokenizer,
-            obs_stack_keys=["image_primary"],
-            task_stack_keys=["image_primary"],
-            encoder=ModuleSpec.create(SmallStem16),
-        ),
-        "wrist": ModuleSpec.create(
-            ImageTokenizer,
-            obs_stack_keys=["image_wrist"],
-            task_stack_keys=["image_wrist"],
-            encoder=ModuleSpec.create(SmallStem16),
-        ),
-        "extra_cam": ModuleSpec.create(
-            ImageTokenizer,
-            obs_stack_keys=["image_extra_cam"],
-            task_stack_keys=["image_extra_cam"],
-            encoder=ModuleSpec.create(SmallStem16),
-        ),
-    }
-    # config["model"]["observation_tokenizers"]["extra_cam"] = ModuleSpec.create(
-    #     ImageTokenizer,
-    #     obs_stack_keys=["image_extra_cam"],
-    #     task_stack_keys=["image_extra_cam"],
-    #     encoder=ModuleSpec.create(SmallStem16),
-    # )
+    # from octo.model.components.vit_encoders import SmallStem16
+    # config["model"]["observation_tokenizers"] = {
+    #     "primary": ModuleSpec.create(
+    #         ImageTokenizer,
+    #         obs_stack_keys=["image_primary"],
+    #         task_stack_keys=["image_primary"],
+    #         encoder=ModuleSpec.create(SmallStem16),
+    #     ),
+    #     # "wrist": ModuleSpec.create(
+    #     #     ImageTokenizer,
+    #     #     obs_stack_keys=["image_wrist"],
+    #     #     task_stack_keys=["image_wrist"],
+    #     #     encoder=ModuleSpec.create(SmallStem16),
+    #     # ),
+    #     "extra_cam": ModuleSpec.create(
+    #         ImageTokenizer,
+    #         obs_stack_keys=["image_extra_cam"],
+    #         task_stack_keys=["image_extra_cam"],
+    #         encoder=ModuleSpec.create(SmallStem16),
+    #     ),
+    # }
+
     
     from octo.model.components.action_heads import L1ActionHead
     from octo.model.components.action_heads import DiffusionActionHead
     config["model"]["heads"]["action"] = ModuleSpec.create(
-        L1ActionHead,
-        # DiffusionActionHead,
-        action_horizon=10,
+        # L1ActionHead,
+        DiffusionActionHead,
+        action_horizon=20,
         action_dim=8,
         readout_key="readout_action",
     )
