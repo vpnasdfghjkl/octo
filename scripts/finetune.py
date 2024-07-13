@@ -185,7 +185,7 @@ def main(_):
     config["model"]["heads"]["action"] = ModuleSpec.create(
         # L1ActionHead,
         DiffusionActionHead,
-        action_horizon=20,
+        action_horizon=4,
         action_dim=8,
         readout_key="readout_action",
     )

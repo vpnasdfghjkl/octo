@@ -66,14 +66,14 @@ def get_config(config_string="full,multimodal"):
 
     # max_steps = FieldReference(50000)
     max_steps = FieldReference(3000)
-    window_size = FieldReference(default=2)
+    window_size = FieldReference(default=1)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
         # batch_size=256,
-        batch_size=8,
-        shuffle_buffer_size=10000,
+        batch_size=2,
+        shuffle_buffer_size=1,
         num_steps=max_steps,
         log_interval=100,
         # eval_interval=5000,
@@ -133,14 +133,14 @@ def get_config(config_string="full,multimodal"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        action_horizon=20,
+        action_horizon=4,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
             keep_image_prob=keep_image_prob,
         ),
         # If the default data loading speed is too slow, try these:
-        num_parallel_calls=16,  # for less CPU-intensive ops
+        # num_parallel_calls=16,  # for less CPU-intensive ops
     )
     workspace_augment_kwargs = dict(
         random_resized_crop=dict(scale=[0.8, 1.0], ratio=[0.9, 1.1]),
@@ -175,14 +175,14 @@ def get_config(config_string="full,multimodal"):
             "wrist": (128, 128),  # wrist camera is at 128x128
         },
         image_augment_kwargs=dict(
-            primary=workspace_augment_kwargs,
+            # primary=workspace_augment_kwargs,
             wrist=wrist_augment_kwargs,
         ),
     )
     # If the default data loading speed is too slow, try these:
-    config[
-        "frame_transform_threads"
-    ] = 16  # for the most CPU-intensive ops (decoding, resizing, augmenting)
+    # config[
+    #     "frame_transform_threads"
+    # ] = 16  # for the most CPU-intensive ops (decoding, resizing, augmenting)
 
     config["traj_transform_kwargs"] = traj_transform_kwargs
     config["frame_transform_kwargs"] = frame_transform_kwargs
