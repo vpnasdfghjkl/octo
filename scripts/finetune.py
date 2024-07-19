@@ -36,7 +36,6 @@ from octo.utils.train_utils import (
 
 try:
     from jax_smi import initialise_tracking  # type: ignore
-
     initialise_tracking()
 except ImportError:
     pass
@@ -148,15 +147,17 @@ def main(_):
     config = config.to_dict()
 
 #===============================================================================================
+    del config["model"]["observation_tokenizers"]["wrist"]
     from octo.model.components.tokenizers import LowdimObsTokenizer,ImageTokenizer
     config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
         LowdimObsTokenizer,
-        n_bins=256,
+        n_bins=512,
         bin_type="normal",
-        low=-2.0,
-        high=2.0,
+        low=-16.0,
+        high=16.0,
         obs_keys=["proprio"],
     )
+
     # from octo.model.components.vit_encoders import SmallStem16
     # config["model"]["observation_tokenizers"] = {
     #     "primary": ModuleSpec.create(
@@ -165,30 +166,37 @@ def main(_):
     #         task_stack_keys=["image_primary"],
     #         encoder=ModuleSpec.create(SmallStem16),
     #     ),
-    #     # "wrist": ModuleSpec.create(
-    #     #     ImageTokenizer,
-    #     #     obs_stack_keys=["image_wrist"],
-    #     #     task_stack_keys=["image_wrist"],
-    #     #     encoder=ModuleSpec.create(SmallStem16),
-    #     # ),
-    #     "extra_cam": ModuleSpec.create(
-    #         ImageTokenizer,
-    #         obs_stack_keys=["image_extra_cam"],
-    #         task_stack_keys=["image_extra_cam"],
-    #         encoder=ModuleSpec.create(SmallStem16),
-    #     ),
+        # "wrist": ModuleSpec.create(
+        #     ImageTokenizer,
+        #     obs_stack_keys=["image_wrist"],
+        #     task_stack_keys=["image_wrist"],
+        #     encoder=ModuleSpec.create(SmallStem16),
+        # ),
+        # "extra_cam": ModuleSpec.create(
+        #     ImageTokenizer,
+        #     obs_stack_keys=["image_extra_cam"],
+        #     task_stack_keys=["image_extra_cam"],
+        #     encoder=ModuleSpec.create(SmallStem16),
+        # ),
     # }
-
+    # config["model"]["observation_tokenizers"]["extra_cam"] = ModuleSpec.create(
+    #     ImageTokenizer,
+    #     obs_stack_keys=["image_extra_cam"],
+    #     task_stack_keys=["image_extra_cam"],
+    #     encoder=ModuleSpec.create(SmallStem16),
+    # )
     
-    from octo.model.components.action_heads import L1ActionHead
-    from octo.model.components.action_heads import DiffusionActionHead
+    from octo.model.components.action_heads import L1ActionHead,DiffusionActionHead,MSEActionHead
     config["model"]["heads"]["action"] = ModuleSpec.create(
-        # L1ActionHead,
-        DiffusionActionHead,
-        action_horizon=4,
+        L1ActionHead,
+        # MSEActionHead,
+        # DiffusionActionHead,
+        action_horizon=128,
         action_dim=8,
         readout_key="readout_action",
     )
+    
+
 #===============================================================================================
 
     check_config_diff(config, pretrained_model.config)

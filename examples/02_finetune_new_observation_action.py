@@ -15,7 +15,7 @@ import tqdm
 import wandb
 
 from octo.data.dataset import make_single_dataset
-from octo.model.components.action_heads import L1ActionHead
+from octo.model.components.action_heads import L1ActionHead,DiffusionActionHead
 from octo.model.components.tokenizers import LowdimObsTokenizer
 from octo.model.octo_model import OctoModel
 from octo.utils.jax_utils import initialize_compilation_cache
@@ -35,7 +35,7 @@ flags.DEFINE_string(
 flags.DEFINE_string("data_dir", None, "Path to finetuning dataset, in RLDS format.")
 flags.DEFINE_string("save_dir", None, "Directory for saving finetuning checkpoints.")
 # flags.DEFINE_integer("batch_size", 128, "Batch size for finetuning.")
-flags.DEFINE_integer("batch_size", 2, "Batch size for finetuning.")
+flags.DEFINE_integer("batch_size", 8, "Batch size for finetuning.")
 
 flags.DEFINE_bool(
     "freeze_transformer",
@@ -43,7 +43,7 @@ flags.DEFINE_bool(
     "Whether pre-trained transformer weights should be frozen.",
 )
 
-# python examples/02_finetune_new_observation_action.py --pretrained_path=hf://rail-berkeley/octo-small-1.5 --config.save_dir=finetune_ckpt --data_dir=/home/smj/tensorflow_datasetsdef main(_):
+# python examples/02_finetune_new_observation_action.py --pretrained_path=hf://rail-berkeley/octo-small-1.5 --save_dir=finetune_ckpt --data_dir=/media/iuucb/PortableSSD/30fps_joint_primary_s2s
 def main(_):
     assert (
         FLAGS.batch_size % jax.device_count() == 0
@@ -65,28 +65,31 @@ def main(_):
     # delete goal images in the data loader since we will train a language-conditioned-only policy
     # TODO: directly load this from raw data to make it less opaque?
     logging.info("Loading finetuning dataset...")
+
+    action_horizon=10
+    action_dim=8
     dataset = make_single_dataset(
         dataset_kwargs=dict(
-            name="kuavo",
+            name="kuavo_two_cam_cartesian",
             data_dir=FLAGS.data_dir,
-            image_obs_keys={"primary": "image"},
+            image_obs_keys={"primary": "image02","wrist":None},
             proprio_obs_key="state",
             language_key="language_instruction",
             action_normalization_mask=[True, True, True, True, True, True,True, False],
         ),
         traj_transform_kwargs=dict(
             window_size=2,
-            action_horizon=10,
+            action_horizon=action_horizon,
         ),
         frame_transform_kwargs=dict(
-            resize_size={"primary": (256, 256)},
+            resize_size={"primary": (128, 128)},
         ),
         train=True,
     )
     train_data_iter = (
         dataset.repeat()
         .unbatch()
-        .shuffle(10000)  # can reduce this if RAM consumption too high
+        .shuffle(1000)  # can reduce this if RAM consumption too high
         .batch(FLAGS.batch_size)
         .iterator()
     )
@@ -117,9 +120,10 @@ def main(_):
     )
     # Fully override the old action head with a new one (for smaller changes, you can use update_config)
     config["model"]["heads"]["action"] = ModuleSpec.create(
-        L1ActionHead,
-        action_horizon=10,
-        action_dim=8,
+        # L1ActionHead,
+        DiffusionActionHead,
+        action_horizon=action_horizon,
+        action_dim=action_dim,
         readout_key="readout_action",
     )
 
@@ -184,7 +188,7 @@ def main(_):
 
     # run finetuning loop
     logging.info("Starting finetuning...")
-    for i in tqdm.tqdm(range(5000), total=5000, dynamic_ncols=True):
+    for i in tqdm.tqdm(range(2000), total=2000, dynamic_ncols=True):
         batch = next(train_data_iter)
         train_state, update_info = train_step(train_state, batch)
         if (i + 1) % 100 == 0:

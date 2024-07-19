@@ -35,7 +35,7 @@ flags.DEFINE_string(
 flags.DEFINE_string("data_dir", None, "Path to finetuning dataset, in RLDS format.")
 flags.DEFINE_string("save_dir", None, "Directory for saving finetuning checkpoints.")
 # flags.DEFINE_integer("batch_size", 128, "Batch size for finetuning.")
-flags.DEFINE_integer("batch_size", 1, "Batch size for finetuning.")
+flags.DEFINE_integer("batch_size", 32 "Batch size for finetuning.")
 
 flags.DEFINE_bool(
     "freeze_transformer",

@@ -15,28 +15,11 @@ def get_config(config_string="full,multimodal"):
     # first image key should be the third-person view (None if not used)
     # and second image key should be the wrist view (None if not used)
 
-    # FINETUNING_KWARGS = {
-    #     "name": "bridge_dataset",
-    #     "data_dir": "./tests/debug_dataset",
-    #     "image_obs_keys": {"primary": "image_0", "wrist": None},
-    #     "proprio_obs_key": "proprio",
-    #     "language_key": "language_instruction",
-    #     "action_proprio_normalization_type": "normal",
-    #     # We want to avoid normalizing the gripper
-    #     "action_normalization_mask": [True, True, True, True, True, True, False],
-    #     # standardize_fn is dynamically loaded from a file
-    #     # for example: "experiments/kevin/custom_standardization_transforms.py:aloha_dataset_transform"
-    #     "standardize_fn": ModuleSpec.create(
-    #         "octo.data.oxe.oxe_standardization_transforms:bridge_dataset_transform",
-    #     ),
-    #     # If the default data loading speed is too slow, try these:
-    #     # "num_parallel_reads": 8,  # for reading from disk / GCS
-    #     # "num_parallel_calls": 16,  # for initial dataset construction
-    # }
+
     FINETUNING_KWARGS = {
-        "name": "kuavo_two_cam",
-        "data_dir": "/media/smj/4A7A0C167A0BFE07/octo_rlds",
-        "image_obs_keys": {"wrist": "image01"},
+        "name": "directly_read",
+        "data_dir": "/media/smj/新加卷1/tfds/directly_read",
+        "image_obs_keys": { "primary": "image02","secondary": "image01"},
         "proprio_obs_key": "state",
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
@@ -65,15 +48,16 @@ def get_config(config_string="full,multimodal"):
         raise ValueError("Invalid mode")
 
     # max_steps = FieldReference(50000)
-    max_steps = FieldReference(3000)
-    window_size = FieldReference(default=1)
+    max_steps = FieldReference(10000)
+    window_size = FieldReference(default=2)
 
     config = dict(
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
         # batch_size=256,
-        batch_size=2,
-        shuffle_buffer_size=1,
+        batch_size=32,
+        # shuffle_buffer_size=10000,
+        shuffle_buffer_size=10000,
         num_steps=max_steps,
         log_interval=100,
         # eval_interval=5000,
@@ -93,11 +77,10 @@ def get_config(config_string="full,multimodal"):
             learning_rate=dict(
                 name="cosine",
                 init_value=0.0,
-                peak_value=3e-4,
-                # warmup_steps=2000,
-                warmup_steps=200,
+                peak_value=3e-5,
+                warmup_steps=2000,
                 decay_steps=max_steps,
-                end_value=0.0,
+                end_value=3e-6,
             ),
             weight_decay=0.01,
             clip_gradient=1.0,
@@ -106,14 +89,13 @@ def get_config(config_string="full,multimodal"):
         ),
         val_kwargs=dict(
             val_shuffle_buffer_size=1000,
-            # num_val_batches=16,
-            num_val_batches=4,
+            num_val_batches=16,
+            # num_val_batches=4,
         ),
         viz_kwargs=dict(
             # eval_batch_size=128,
             eval_batch_size=4,
-            # trajs_for_metrics=100,
-            trajs_for_metrics=8,
+            trajs_for_metrics=100,
             trajs_for_viz=8,
             samples_per_state=8,
         ),
@@ -133,7 +115,7 @@ def get_config(config_string="full,multimodal"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        action_horizon=4,
+        action_horizon=64,
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
@@ -171,18 +153,18 @@ def get_config(config_string="full,multimodal"):
     frame_transform_kwargs = dict(
         resize_size={
             # "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            # "extra_cam": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "wrist": (128, 128),  # wrist camera is at 128x128
+            "secondary": (256, 256),  # workspace (3rd person) camera is at 256x256
+            "primary": (128, 128),  # wrist camera is at 128x128
         },
         image_augment_kwargs=dict(
-            # primary=workspace_augment_kwargs,
+            primary=workspace_augment_kwargs,
             wrist=wrist_augment_kwargs,
         ),
     )
     # If the default data loading speed is too slow, try these:
-    # config[
-    #     "frame_transform_threads"
-    # ] = 16  # for the most CPU-intensive ops (decoding, resizing, augmenting)
+    config[
+        "frame_transform_threads"
+    ] = 16  # for the most CPU-intensive ops (decoding, resizing, augmenting)
 
     config["traj_transform_kwargs"] = traj_transform_kwargs
     config["frame_transform_kwargs"] = frame_transform_kwargs
