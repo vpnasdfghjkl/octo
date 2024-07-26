@@ -171,6 +171,14 @@ tar -xf cudnn-linux-x86_64-8.9.7.29_cuda12-archive.tar.xz
 sudo cp lib/* /usr/local/cuda-12.2/lib64/
 sudo cp include/* /usr/local/cuda-12.2/include
 ```
+1. ptxas path:  export PATH=/usr/local/cuda-12.2/bin:$PATH,may be the new path should be in front of the old one 
+2. .bashrc modify PATH of cuda-12.2 but nvcc -V still 10.0:usr/bin have a vncc ,sudo vim /usr/bin/nvcc,modify like that 
+  ```bash
+  #!/bin/sh
+
+  #exec /usr/lib/nvidia-cuda-toolkit/bin/nvcc "$@"
+  exec /usr/local/cuda-12.2/bin/nvcc "$@"
+    ```
 
 ## error rec
 1. batch_size设置为1，刚开始ok，过了几天运行finetune.py会报错

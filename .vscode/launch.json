@@ -9,12 +9,12 @@
             "name": "finetune example",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/scripts/finetune.py",
+            "program": "${workspaceFolder}/scripts/finetune_origin.py",
             "console": "integratedTerminal",
             "args": [
                 "--config.pretrained_path=hf://rail-berkeley/octo-small-1.5",
                 "--debug",
-                "--config.save_dir=${workspaceFolder}/scripts/finetune_ckpt"
+                // "--config.save_dir=${workspaceFolder}/scripts/finetune_ckpt"
             ]
         },
         {

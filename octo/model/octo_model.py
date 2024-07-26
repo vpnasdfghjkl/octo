@@ -564,9 +564,9 @@ def _verify_shapes(
 def _download_from_huggingface(huggingface_repo_id: str):
     import huggingface_hub
 
-    # folder = huggingface_hub.snapshot_download(huggingface_repo_id)
+    folder = huggingface_hub.snapshot_download(huggingface_repo_id)
     # folder='/home/rebot801/.cache/huggingface/hub/models--rail-berkeley--octo-small-1.5/snapshots/dc9aa3019f764726c770814b27e4ab0fc6e32a58'
-    folder='/home/rebot801/hx/dc9aa3019f764726c770814b27e4ab0fc6e32a58'
+    # folder='/home/rebot801/hx/dc9aa3019f764726c770814b27e4ab0fc6e32a58'
     return folder
     return folder
 
