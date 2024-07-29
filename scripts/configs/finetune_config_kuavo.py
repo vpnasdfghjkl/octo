@@ -17,9 +17,9 @@ def get_config(config_string="full,multimodal"):
 
 
     FINETUNING_KWARGS = {
-        "name": "directly_read",
-        "data_dir": "/media/smj/新加卷1/tfds/directly_read",
-        "image_obs_keys": { "primary": "image02","secondary": "image01"},
+        "name": "jump0_60hz",
+        "data_dir": "/home/octo/hx/dataset/rlds/tfds_pure_bg2",
+        "image_obs_keys": { "primary": "image01"},
         "proprio_obs_key": "state",
         "language_key": "language_instruction",
         "action_proprio_normalization_type": "normal",
@@ -47,15 +47,17 @@ def get_config(config_string="full,multimodal"):
     else:
         raise ValueError("Invalid mode")
 
-    # max_steps = FieldReference(50000)
-    max_steps = FieldReference(10000)
-    window_size = FieldReference(default=2)
-
+    max_steps = FieldReference(50000)
+    # max_steps = FieldReference(20000)
+    window_size = FieldReference(default=1)
+    
     config = dict(
+        action_horizon=32,
+
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
         # batch_size=256,
-        batch_size=32,
+        batch_size=64,
         # shuffle_buffer_size=10000,
         shuffle_buffer_size=10000,
         num_steps=max_steps,
@@ -63,11 +65,11 @@ def get_config(config_string="full,multimodal"):
         # eval_interval=5000,
         eval_interval=1000,
         # save_interval=5000,
-        save_interval=1000,
+        save_interval=5000,
         save_dir=placeholder(str),
         seed=42,
         wandb=dict(
-            project="octo_finetune", group=placeholder(str), entity=placeholder(str)
+            project="octo_finetune_pureBg", group=placeholder(str), entity=placeholder(str)
         ),
         dataset_kwargs=FINETUNING_KWARGS,
         modality=task,
@@ -77,10 +79,10 @@ def get_config(config_string="full,multimodal"):
             learning_rate=dict(
                 name="cosine",
                 init_value=0.0,
-                peak_value=3e-5,
+                peak_value=3e-4,
                 warmup_steps=2000,
                 decay_steps=max_steps,
-                end_value=3e-6,
+                end_value=0,
             ),
             weight_decay=0.01,
             clip_gradient=1.0,
@@ -115,7 +117,7 @@ def get_config(config_string="full,multimodal"):
 
     traj_transform_kwargs = dict(
         window_size=window_size,
-        action_horizon=64,
+        action_horizon=config["action_horizon"],
         goal_relabeling_strategy=goal_relabeling_strategy,
         task_augment_strategy="delete_task_conditioning",
         task_augment_kwargs=dict(
@@ -153,8 +155,8 @@ def get_config(config_string="full,multimodal"):
     frame_transform_kwargs = dict(
         resize_size={
             # "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "secondary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "primary": (128, 128),  # wrist camera is at 128x128
+            "primary": (256, 256),  # wrist camera is at 128x128
+            # "secondary": (128, 128),  # workspace (3rd person) camera is at 256x256
         },
         image_augment_kwargs=dict(
             primary=workspace_augment_kwargs,

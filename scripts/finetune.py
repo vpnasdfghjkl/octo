@@ -42,7 +42,7 @@ except ImportError:
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("name", "experiment", "Experiment name.")
+flags.DEFINE_string("name", "pureBg_modifyProrioToker2", "Experiment name.")
 flags.DEFINE_bool("debug", False, "Debug config (no wandb logging)")
 
 default_config_file = os.path.join(
@@ -114,13 +114,13 @@ def main(_):
         name=name,
         time=datetime.datetime.now().strftime("%Y%m%d_%H%M%S"),
     )
-    wandb.init(
-        config=FLAGS.config.to_dict(),
-        id=wandb_id,
-        name=name,
-        mode="disabled" if FLAGS.debug else None,
-        **FLAGS.config.wandb,
-    )
+    # wandb.init(
+    #     config=FLAGS.config.to_dict(),
+    #     id=wandb_id,
+    #     name=name,
+    #     mode="disabled" if FLAGS.debug else None,
+    #     **FLAGS.config.wandb,
+    # )
 
     #########
     #
@@ -153,52 +153,38 @@ def main(_):
         LowdimObsTokenizer,
         n_bins=512,
         bin_type="normal",
-        low=-16.0,
-        high=16.0,
+        low=-100.0,
+        high=100.0,
         obs_keys=["proprio"],
+        discretize=False,
     )
-
-    # from octo.model.components.vit_encoders import SmallStem16
-    # config["model"]["observation_tokenizers"] = {
-    #     "primary": ModuleSpec.create(
-    #         ImageTokenizer,
-    #         obs_stack_keys=["image_primary"],
-    #         task_stack_keys=["image_primary"],
-    #         encoder=ModuleSpec.create(SmallStem16),
-    #     ),
-        # "wrist": ModuleSpec.create(
-        #     ImageTokenizer,
-        #     obs_stack_keys=["image_wrist"],
-        #     task_stack_keys=["image_wrist"],
-        #     encoder=ModuleSpec.create(SmallStem16),
-        # ),
-        # "extra_cam": ModuleSpec.create(
-        #     ImageTokenizer,
-        #     obs_stack_keys=["image_extra_cam"],
-        #     task_stack_keys=["image_extra_cam"],
-        #     encoder=ModuleSpec.create(SmallStem16),
-        # ),
-    # }
-    # config["model"]["observation_tokenizers"]["extra_cam"] = ModuleSpec.create(
+    from octo.model.components.vit_encoders import SmallStem16
+    # config["model"]["observation_tokenizers"]["secondary"] = ModuleSpec.create(
     #     ImageTokenizer,
-    #     obs_stack_keys=["image_extra_cam"],
-    #     task_stack_keys=["image_extra_cam"],
+    #     obs_stack_keys=["image_secondary"],
+    #     task_stack_keys=["image_secondary",],
     #     encoder=ModuleSpec.create(SmallStem16),
     # )
-    
+   
     from octo.model.components.action_heads import L1ActionHead,DiffusionActionHead,MSEActionHead
     config["model"]["heads"]["action"] = ModuleSpec.create(
         L1ActionHead,
         # MSEActionHead,
         # DiffusionActionHead,
-        action_horizon=128,
+        action_horizon=FLAGS.config.action_horizon,
         action_dim=8,
         readout_key="readout_action",
     )
     
-
+    config["dataset_kwargs"]["batch_size"] = FLAGS.config.batch_size
 #===============================================================================================
-
+    wandb.init(
+        config=FLAGS.config.to_dict(),
+        id=wandb_id,
+        name=name,
+        mode="disabled" if FLAGS.debug else None,
+        **FLAGS.config.wandb,
+    )
     check_config_diff(config, pretrained_model.config)
 
     #########
