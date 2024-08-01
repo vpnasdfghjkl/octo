@@ -144,7 +144,16 @@ def main(_):
     config.update(FLAGS.config.get("update_config", ConfigDict()))
     config = config.to_dict()
     check_config_diff(config, pretrained_model.config)
-
+    from octo.model.components.tokenizers import LowdimObsTokenizer,ImageTokenizer
+    config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
+        LowdimObsTokenizer,
+        n_bins=256,
+        bin_type="normal",
+        low=-2.0,
+        high=2.0,
+        obs_keys=["proprio"],
+        discretize=False,
+    )
     #########
     #
     # Setup Data Loader
@@ -283,10 +292,10 @@ def main(_):
 
     # Data parallelism
     # Model is replicated across devices, data is split across devices
-    @partial(
-        jax.jit,
-        in_shardings=[replicated_sharding, dp_sharding],
-    )
+    # @partial(
+    #     jax.jit,
+    #     in_shardings=[replicated_sharding, dp_sharding],
+    # )
     def train_step(state: TrainState, batch):
         rng, dropout_rng = jax.random.split(state.rng)
         (loss, info), grads = jax.value_and_grad(loss_fn, has_aux=True)(

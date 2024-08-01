@@ -17,7 +17,7 @@ def get_config(config_string="full,multimodal"):
 
 
     FINETUNING_KWARGS = {
-        "name": "jump0_60hz",
+        "name": "jump0_60hz_2cam_no_resize:1.0.0",
         "data_dir": "/home/octo/hx/dataset/rlds/tfds_pure_bg2",
         "image_obs_keys": { "primary": "image01"},
         "proprio_obs_key": "state",
@@ -47,19 +47,18 @@ def get_config(config_string="full,multimodal"):
     else:
         raise ValueError("Invalid mode")
 
-    max_steps = FieldReference(50000)
+    max_steps = FieldReference(20000)
     # max_steps = FieldReference(20000)
     window_size = FieldReference(default=1)
     
     config = dict(
         action_horizon=32,
-
         pretrained_path=placeholder(str),
         pretrained_step=placeholder(int),
         # batch_size=256,
         batch_size=64,
         # shuffle_buffer_size=10000,
-        shuffle_buffer_size=10000,
+        shuffle_buffer_size=100000,
         num_steps=max_steps,
         log_interval=100,
         # eval_interval=5000,
@@ -154,8 +153,8 @@ def get_config(config_string="full,multimodal"):
     )
     frame_transform_kwargs = dict(
         resize_size={
-            # "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
-            "primary": (256, 256),  # wrist camera is at 128x128
+            "primary": (256, 256),  # workspace (3rd person) camera is at 256x256
+            # "primary": (256, 220),  # wrist camera is at 128x128
             # "secondary": (128, 128),  # workspace (3rd person) camera is at 256x256
         },
         image_augment_kwargs=dict(

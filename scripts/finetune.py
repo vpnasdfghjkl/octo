@@ -42,7 +42,7 @@ except ImportError:
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("name", "pureBg_modifyProrioToker2", "Experiment name.")
+flags.DEFINE_string("name", "jump0_60hz_1primary_noSetLowHigh", "Experiment name.")
 flags.DEFINE_bool("debug", False, "Debug config (no wandb logging)")
 
 default_config_file = os.path.join(
@@ -151,10 +151,10 @@ def main(_):
     from octo.model.components.tokenizers import LowdimObsTokenizer,ImageTokenizer
     config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
         LowdimObsTokenizer,
-        n_bins=512,
-        bin_type="normal",
-        low=-100.0,
-        high=100.0,
+        # n_bins=256,
+        # bin_type="normal",
+        # low=-2.0,
+        # high=2.0,
         obs_keys=["proprio"],
         discretize=False,
     )
