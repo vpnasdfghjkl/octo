@@ -6,6 +6,8 @@ To run this example, first download and extract the dataset from here: https://r
 
 python examples/02_finetune_new_observation_action.py --pretrained_path=hf://rail-berkeley/octo-small-1.5 --data_dir=...
 """
+
+
 from absl import app, flags, logging
 import flax
 import jax
@@ -35,7 +37,7 @@ flags.DEFINE_string(
 flags.DEFINE_string("data_dir", None, "Path to finetuning dataset, in RLDS format.")
 flags.DEFINE_string("save_dir", None, "Directory for saving finetuning checkpoints.")
 # flags.DEFINE_integer("batch_size", 128, "Batch size for finetuning.")
-flags.DEFINE_integer("batch_size", 8, "Batch size for finetuning.")
+flags.DEFINE_integer("batch_size", 16, "Batch size for finetuning.")
 
 flags.DEFINE_bool(
     "freeze_transformer",
@@ -43,7 +45,7 @@ flags.DEFINE_bool(
     "Whether pre-trained transformer weights should be frozen.",
 )
 
-# python examples/02_finetune_new_observation_action.py --pretrained_path=hf://rail-berkeley/octo-small-1.5 --save_dir=finetune_ckpt --data_dir=/media/iuucb/PortableSSD/30fps_joint_primary_s2s
+#python examples/02_finetune_new_observation_action.py --data_dir=/home/octo/hx/dataset/rlds/tfds_pure_bg2 --pretrained_path=hf://rail-berkeley/octo-base-1.5 --save_dir=/home/octo/hx/octo/ckpt
 def main(_):
     assert (
         FLAGS.batch_size % jax.device_count() == 0
@@ -54,7 +56,7 @@ def main(_):
     tf.config.set_visible_devices([], "GPU")
 
     # setup wandb for logging
-    wandb.init(name="finetune_kuavo", project="octo")
+    wandb.init(name="example_shenzhen", project="octo")
 
     # load pre-trained model
     logging.info("Loading pre-trained model...")
@@ -66,13 +68,13 @@ def main(_):
     # TODO: directly load this from raw data to make it less opaque?
     logging.info("Loading finetuning dataset...")
 
-    action_horizon=10
+    action_horizon=8
     action_dim=8
     dataset = make_single_dataset(
         dataset_kwargs=dict(
-            name="kuavo_two_cam_cartesian",
+            name="shenzhen1",
             data_dir=FLAGS.data_dir,
-            image_obs_keys={"primary": "image02","wrist":None},
+            image_obs_keys={"primary": "image01","wrist":None},
             proprio_obs_key="state",
             language_key="language_instruction",
             action_normalization_mask=[True, True, True, True, True, True,True, False],
@@ -82,14 +84,14 @@ def main(_):
             action_horizon=action_horizon,
         ),
         frame_transform_kwargs=dict(
-            resize_size={"primary": (128, 128)},
+            resize_size={"primary": (256, 256)},
         ),
         train=True,
     )
     train_data_iter = (
         dataset.repeat()
         .unbatch()
-        .shuffle(1000)  # can reduce this if RAM consumption too high
+        .shuffle(100000)  # can reduce this if RAM consumption too high
         .batch(FLAGS.batch_size)
         .iterator()
     )
@@ -110,18 +112,18 @@ def main(_):
     config = pretrained_model.config
     del config["model"]["observation_tokenizers"]["wrist"]
     ###
-    config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
-        LowdimObsTokenizer,
-        n_bins=256,
-        bin_type="normal",
-        low=-2.0,
-        high=2.0,
-        obs_keys=["proprio"],
-    )
+    # config["model"]["observation_tokenizers"]["proprio"] = ModuleSpec.create(
+    #     LowdimObsTokenizer,
+    #     n_bins=256,
+    #     bin_type="normal",
+    #     low=-2.0,
+    #     high=2.0,
+    #     obs_keys=["proprio"],
+    # )
     # Fully override the old action head with a new one (for smaller changes, you can use update_config)
     config["model"]["heads"]["action"] = ModuleSpec.create(
-        # L1ActionHead,
-        DiffusionActionHead,
+        L1ActionHead,
+        # DiffusionActionHead,
         action_horizon=action_horizon,
         action_dim=action_dim,
         readout_key="readout_action",
@@ -149,10 +151,17 @@ def main(_):
         [optax.linear_schedule(0, 3e-5, 100), optax.constant_schedule(3e-5)], [100]
     )
     tx = optax.adamw(learning_rate)
+
     frozen_keys = model.config["optimizer"]["frozen_keys"]
+
+    # TODO 
     if FLAGS.freeze_transformer:
         frozen_keys.append("BlockTransformer_0")
+        # frozen_keys.append("octo_transformer.BlockTransformer_0")  # 2024.08.08--LiuXin
+
+        
     tx = freeze_weights(tx, model.params, frozen_keys)
+    
     train_state = TrainState.create(
         rng=jax.random.PRNGKey(1234),
         model=model,
@@ -188,7 +197,7 @@ def main(_):
 
     # run finetuning loop
     logging.info("Starting finetuning...")
-    for i in tqdm.tqdm(range(2000), total=2000, dynamic_ncols=True):
+    for i in tqdm.tqdm(range(27000), total=27000, dynamic_ncols=True):
         batch = next(train_data_iter)
         train_state, update_info = train_step(train_state, batch)
         if (i + 1) % 100 == 0:
@@ -197,7 +206,7 @@ def main(_):
                 flax.traverse_util.flatten_dict({"training": update_info}, sep="/"),
                 step=i,
             )
-        if (i + 1) % 1000 == 0:
+        if (i + 1) % 2000 == 0:
             # save checkpoint
             train_state.model.save_pretrained(step=i, checkpoint_path=FLAGS.save_dir)
 
